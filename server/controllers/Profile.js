@@ -58,9 +58,14 @@ exports.getAllDetails = async (req, res) => {
 
 exports.updateDisplayPicture = async (req, res) => {
   try {
+    if (!req.files || !req.files.displayPicture) {
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded or incorrect file field name",
+      });
+    }
     const displayPicture = req.files.displayPicture;
     const userId = req.user.id;
-    z;
     const image = await uploadImageToloudinary(
       displayPicture,
       process.env.FOLDER_NAME,
@@ -78,7 +83,12 @@ exports.updateDisplayPicture = async (req, res) => {
       data: updateProfile,
     });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error("Error in updateDisplayPicture:", err);
+    return res.status(500).json({
+      success: false,
+      error: err.message,
+      stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+    });
   }
 };
 

@@ -13,22 +13,22 @@ export function updateDisplayPicture(token, formData) {
         settingsEndpoints.UPDATE_DISPLAY_PICTURE_API,
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
+          Authorization: `Bearer ${token}`,
         }
       );
       if (!response.data.success) {
         throw new Error(response.data.message);
       }
       toast.success("Display picture updated successfully");
-      dispatch(setUser(response.data.data));
+      const updatedUser = response.data.data;
+      dispatch(setUser(updatedUser));
+      localStorage.setItem("user", JSON.stringify(updatedUser));
     } catch (err) {
-      console.log(err);
+      console.error("Update error:", err);
       toast.error("Failed to update display picture");
+    } finally {
+      toast.dismiss(toastId);
     }
-    toast.dismiss(toastId);
   };
 }
 

@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { updateDisplayPicture } from "../../../../services/operations/SettingsAPI";
 import IconBtn from "../../../common/IconBtn";
 import { FiUpload } from "react-icons/fi";
+import toast from "react-hot-toast";
 
 export default function ChangeProfiePicture() {
   const { token } = useSelector((state) => state.auth);
@@ -37,7 +38,6 @@ export default function ChangeProfiePicture() {
 
   const handleFileUpload = () => {
     if (!imagefile) {
-      console.error("No file selected!");
       toast.error("Please select an image file before uploading.");
       return;
     }
@@ -45,17 +45,17 @@ export default function ChangeProfiePicture() {
       setLoading(true);
       const formData = new FormData();
       formData.append("displayPicture", imagefile);
-      console.log(formData);
       dispatch(updateDisplayPicture(token, formData))
         .then(() => {
           setLoading(false);
         })
-        .catch((err) => {
-          console.log(err);
+        .catch((error) => {
+          console.error("Upload error:", error);
           setLoading(false);
         });
-    } catch (err) {
-      console.log(err);
+    } catch (error) {
+      console.error("Error in handleFileUpload:", error);
+      setLoading(false);
     }
   };
 
