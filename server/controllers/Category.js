@@ -26,9 +26,9 @@ exports.createCaetgory = async (req, res) => {
 exports.getCategory = async (req, res) => {
   try {
     const Category = await CategoryModel.find({});
-    return res.status(200).json({ Success: true, Category: Category });
+    return res.status(200).json({ success: true, data: Category });
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
 

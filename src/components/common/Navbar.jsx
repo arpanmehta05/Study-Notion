@@ -23,7 +23,7 @@ export default function Navbar() {
   const fetchCategories = async () => {
     try {
       const result = await apiConnector("GET", categories.CATEGORIES_API);
-      setSubLinks(result.data.Category);
+      setSubLinks(result.data.data);
     } catch (err) {
       console.log(err);
     }
