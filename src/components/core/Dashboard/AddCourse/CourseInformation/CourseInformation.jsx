@@ -41,14 +41,15 @@ export default function CourseInformation() {
       setLoading(false);
     };
     if (editCourse) {
-      setValue("CourseTitle", course.courseName);
-      setValue("CourseShortDesc", course.Description);
-      setValue("CoursePrice", course.price);
-      setValue("CourseTags", course.tag);
-      setValue("CourseBenefits", course.whatYouWillLearn);
-      setValue("CourseCategory", course.category);
-      setValue("CourseRequirements", course.instructions);
-      setValue("CourseImage", course.thumbnail);
+      // Make sure the field names match what you register
+      setValue("courseTitle", course.courseName);
+      setValue("courseShortDescription", course.Description);
+      setValue("coursePrice", course.price);
+      setValue("courseTags", course.tag);
+      setValue("courseBenefits", course.whatYouWillLearn);
+      setValue("category", course.category);
+      setValue("courseRequirements", course.instructions);
+      setValue("courseImage", course.thumbnail);
     }
     getCategories();
   }, []);
@@ -56,15 +57,15 @@ export default function CourseInformation() {
   const isFormUpdated = () => {
     const currentValues = getValues();
     if (
-      currentValues.CourseTitle !== course.courseName ||
-      currentValues.CourseShortDesc !== course.Description ||
-      currentValues.CoursePrice !== course.price ||
-      currentValues.CourseTags.toString() !== course.tag.toString() ||
-      currentValues.CourseBenefits !== course.whatYouWillLearn ||
-      currentValues.CourseCategory._id !== course.category._id ||
-      (currentValues.CourseRequirements.toString() !==
-        course.instructions.toString() &&
-        currentValues.CourseImage !== course.thumbnail)
+      currentValues.courseTitle !== course.courseName ||
+      currentValues.courseShortDescription !== course.Description ||
+      currentValues.coursePrice !== course.price ||
+      currentValues.courseTags?.toString() !== course.tag?.toString() ||
+      currentValues.courseBenefits !== course.whatYouWillLearn ||
+      currentValues.category?._id !== course.category?._id ||
+      (currentValues.courseRequirements?.toString() !==
+        course.instructions?.toString() &&
+        currentValues.courseImage !== course.thumbnail)
     ) {
       return true;
     }
@@ -77,35 +78,35 @@ export default function CourseInformation() {
         const currentValues = getValues();
         const formData = new FormData();
         formData.append("courseId", course._id);
-        if (currentValues.CourseTitle !== course.courseName) {
-          formData.append("courseName", data.CourseTitle);
+        if (currentValues.courseTitle !== course.courseName) {
+          formData.append("courseName", data.courseTitle);
         }
-        if (currentValues.CourseShortDesc !== course.courseDescription) {
-          formData.append("courseDescription", data.CourseShortDesc);
+        if (currentValues.courseShortDescription !== course.courseDescription) {
+          formData.append("courseDescription", data.courseShortDescription);
         }
-        if (currentValues.CoursePrice !== course.price) {
-          formData.append("price", data.CoursePrice);
+        if (currentValues.coursePrice !== course.price) {
+          formData.append("price", data.coursePrice);
         }
-        if (currentValues.CourseTags.toString() !== course.tag.toString()) {
-          formData.append("tag", JSON.stringify(data.CourseTags));
+        if (currentValues.courseTags?.toString() !== course.tag?.toString()) {
+          formData.append("tag", JSON.stringify(data.courseTags));
         }
-        if (currentValues.CourseBenefits !== course.whatYouWillLearn) {
-          formData.append("whatYouWillLearn", data.CourseBenefits);
+        if (currentValues.courseBenefits !== course.whatYouWillLearn) {
+          formData.append("whatYouWillLearn", data.courseBenefits);
         }
-        if (currentValues.CourseCategory._id !== course.category._id) {
-          formData.append("category", data.CourseCategory._id);
+        if (currentValues.category?._id !== course.category?._id) {
+          formData.append("category", data.category._id);
         }
         if (
-          currentValues.CourseRequirements.toString() !==
-          course.instructions.toString()
+          currentValues.courseRequirements?.toString() !==
+          course.instructions?.toString()
         ) {
           formData.append(
             "instructions",
-            JSON.stringify(data.CourseRequirements)
+            JSON.stringify(data.courseRequirements)
           );
         }
-        if (currentValues.CourseImage !== course.thumbnail) {
-          formData.append("thumbnail", data.CourseImage[0]);
+        if (currentValues.courseImage !== course.thumbnail) {
+          formData.append("thumbnail", data.courseImage[0]);
         }
         setLoading(true);
         const result = await editCourseDetails(formData, token);
@@ -119,16 +120,23 @@ export default function CourseInformation() {
       }
       return;
     }
+
     const formData = new FormData();
-    formData.append("courseName", data.CourseTitle);
-    formData.append("courseDescription", data.CourseShortDesc);
-    formData.append("price", data.CoursePrice);
-    formData.append("tag", JSON.stringify(data.CourseTags));
-    formData.append("whatYouWillLearn", data.CourseBenefits);
-    formData.append("category", data.CourseCategory._id);
+    formData.append("courseName", data.courseTitle);
+    formData.append("courseDescription", data.courseShortDescription);
+    formData.append("price", data.coursePrice);
+    formData.append("tag", JSON.stringify(data.courseTags));
+    formData.append("whatYouWillLearn", data.courseBenefits);
+    formData.append("category", data.category._id);
     formData.append("status", COURSE_STATUS.DRAFT);
-    formData.append("instructions", JSON.stringify(data.CourseRequirements));
-    formData.append("thumbnail", data.CourseImage);
+    formData.append("instructions", JSON.stringify(data.courseRequirements));
+    if (data.courseImage instanceof FileList) {
+      formData.append("thumbnail", data.courseImage[0]);
+    } else if (Array.isArray(data.courseImage)) {
+      formData.append("thumbnail", data.courseImage[0]);
+    } else {
+      formData.append("thumbnail", data.courseImage);
+    }
     setLoading(true);
     const result = await addCourseDetails(formData, token);
     if (result) {
@@ -141,10 +149,10 @@ export default function CourseInformation() {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-8 rounded-md border-[1px] border-[#2C333F] bg-[#161D29] p-6"
+      className="space-y-8 rounded-md border border-[#2C333F] bg-[#161D29] p-4"
     >
       <div className="flex flex-col space-y-2">
-        <label className="text-sm text-[#f1f2ff]" htmlFor="CourseTitle">
+        <label className="text-sm text-[#f1f2ff]" htmlFor="courseTitle">
           Course Title <sup className="text-[#EF476F]">*</sup>
         </label>
         <input
@@ -242,11 +250,11 @@ export default function CourseInformation() {
         editData={editCourse ? course?.thumbnail : null}
       />
       <div className="flex flex-col space-y-2">
-        <label className="text-sm text-[#f1f2ff]" htmlFor="courseBenifts">
+        <label className="text-sm text-[#f1f2ff]" htmlFor="courseBenefits">
           Benefits of this course <sup className="text-[#EF476F]">*</sup>
         </label>
         <textarea
-          id="coursBenefits"
+          id="courseBenefits"
           placeholder="Enter benefits of the course"
           {...register("courseBenefits", { required: true })}
           className="form-style resize-none min-h-[130px]"
@@ -268,6 +276,7 @@ export default function CourseInformation() {
       <div className="flex justify-end gap-x-2">
         {editCourse && (
           <button
+            type="button"
             className="flex cursor-pointer items-center gap-x-2 rounded-md bg-[#838894] py-[8px] px-[20px] font-semibold text-[#000814]"
             disabled={loading}
             onClick={() => dispatch(setStep(2))}
@@ -278,6 +287,7 @@ export default function CourseInformation() {
         <IconBtn
           disabled={loading}
           text={!editCourse ? "Next" : "Save Changes"}
+          type="submit"
         >
           <MdNavigateNext />
         </IconBtn>
