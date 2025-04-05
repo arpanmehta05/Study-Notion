@@ -75,13 +75,11 @@ export default function CourseBuilderForm() {
   };
 
   const goToNext = () => {
-    if (course.courseContext.length === 0) {
+    if (course.courseContent?.length === 0) {
       toast.error("Please add atleast one section to continue");
       return;
     }
-    if (
-      course.courseContext.some((section) => section.subSection.length === 0)
-    ) {
+    if (course.courseContent?.some((section) => section.subSection?.length === 0)) {
       toast.error("Please add atleast one lecture to continue");
       return;
     }
@@ -134,10 +132,10 @@ export default function CourseBuilderForm() {
           )}
         </div>
       </form>
-      {course.courseContext.length > 0 && (
+      {course.courseContent && course.courseContent.length > 0 && (
         <NestedView handleChangeEditSectionName={handleChangeEditSectionName} />
       )}
-      <div>
+      <div className="flex justify-end gap-x-3">
         <button
           onClick={goBack}
           className={`flex cursor-pointer items-center gap-x-2 rounded-md bg-[#838894] py-[8px] px-[20px] font-semibold text-[#000814]`}

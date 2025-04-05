@@ -14,7 +14,8 @@ import { HiClock } from "react-icons/hi";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { COURSE_STATUS } from "../../../../utils/constants";
 import Confirmation from "../../../common/Confirmation";
-// import { formatDate } from "../../../../services/formatDate"
+import { formatData } from "../../../../services/formatData";
+
 
 export default function CoursesTable({ courses, setCourses }) {
   const dispatch = useDispatch();
@@ -87,7 +88,7 @@ export default function CoursesTable({ courses, setCourses }) {
                         : course.courseDescription}
                     </p>
                     <p className="text-[12px] text-white">
-                      Created: {formatDate(course.createdAt)}
+                      Created: {formatData(course.createdAt)}
                     </p>
                     {course.status === COURSE_STATUS.DRAFT ? (
                       <p className="flex w-fit flex-row items-center gap-2 rounded-full bg-[#2C333F] px-2 py-[2px] text-[12px] font-medium text-[#F37290]">

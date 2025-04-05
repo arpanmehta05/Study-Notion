@@ -45,21 +45,29 @@ exports.createSubsection = async (req, res) => {
 exports.updateSubsection = async (req, res) => {
   try {
     const { sectionId, subSectionId, title, description } = req.body;
+    
+    console.log("Update request body:", req.body);
+    console.log("Update request files:", req.files);
+    
     const subSection = await SubSectionModel.findById(subSectionId);
     if (!subSection) {
       return res
         .status(400)
         .json({ success: false, message: "Subsection not found" });
     }
+    
     if (!sectionId || !subSectionId || !title || !description) {
-      return res.status(400).json({ error: "All fields are required" });
+      return res.status(400).json({ success: false, error: "All fields are required" });
     }
+    
     if (title !== undefined) {
       subSection.title = title;
     }
+    
     if (description !== undefined) {
       subSection.description = description;
     }
+    
     if (req.files && req.files.video !== undefined) {
       const video = req.files.video;
       const uploadDetails = await uploadImageToloudinary(
@@ -69,26 +77,29 @@ exports.updateSubsection = async (req, res) => {
       subSection.videoUrl = uploadDetails.secure_url;
       subSection.timeDuration = `${uploadDetails.duration}`;
     }
+    
     await subSection.save();
-    const updatedSubSection = await SubSectionModel.findById(
-      subSectionId
-    ).populate("subSection");
+  
+    const section = await SectionModel.findById(sectionId).populate("subSection");
+    
     return res.status(200).json({
       success: true,
       message: "Section updated successfully",
-      data: updatedSection,
+      data: section
     });
   } catch (err) {
+    console.error("Subsection update error:", err);
     res.status(500).json({
       success: false,
       message: "An error occurred while updating the section",
+      error: err.message
     });
   }
 };
 
 exports.deleteSubSection = async (req, res) => {
   try {
-    const { sectionId, subSectionId } = req.params;
+    const { sectionId, subSectionId } = req.body;
     await SectionModel.findByIdAndUpdate(
       {
         _id: sectionId,

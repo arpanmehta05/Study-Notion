@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import "video-react/dist/video-react.css";
 import { FiUploadCloud } from "react-icons/fi";
 import { useDropzone } from "react-dropzone";
-import { Player } from "video-react";
 import { useSelector } from "react-redux";
 
 export default function Upload({
@@ -14,19 +12,23 @@ export default function Upload({
   video = false,
   viewData = null,
   editData = null,
+  setFile,
 }) {
   const { course } = useSelector((state) => state.course);
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewSource, setPreviewSource] = useState(
     viewData ? viewData : editData ? editData : ""
   );
-  
+
   const onDrop = (acceptedFiles) => {
     const file = acceptedFiles[0];
     if (file) {
       previewFile(file);
       setSelectedFile(file);
-      setValue(name, file); // Directly set value here
+      setValue(name, file);
+      if (setFile) {
+        setFile(file);
+      }
     }
   };
 
@@ -35,7 +37,7 @@ export default function Upload({
       ? { "image/*": [".jpeg", ".jpg", ".png"] }
       : { "video/*": [".mp4"] },
     onDrop,
-    noClick: viewData ? true : false, // Prevent clicks if in view mode
+    onClick: viewData ? true : false,
     noKeyboard: viewData ? true : false,
   });
 
@@ -48,8 +50,6 @@ export default function Upload({
   };
 
   useEffect(() => {
-    // This registers the field but doesn't handle file inputs well
-    // We'll handle the value setting manually with setValue
     register(name, { required: !viewData && !editData });
   }, [register, name, viewData, editData]);
 
@@ -72,7 +72,11 @@ export default function Upload({
                 className="h-full w-full rounded-md object-cover"
               />
             ) : (
-              <Player aspectRatio="16:9" playsInline src={previewSource} />
+              <video
+                src={previewSource}
+                controls
+                className="w-full h-auto rounded-md"
+              />
             )}
             {!viewData && (
               <button
@@ -93,21 +97,21 @@ export default function Upload({
             className="flex w-full flex-col items-center p-6"
             {...getRootProps()}
           >
-            <input {...getInputProps()} />
-            <div 
+            <input {...getInputProps()} className="hidden" />
+            <div
               className="grid aspect-square w-14 place-items-center rounded-full bg-[#171717] cursor-pointer"
-              onClick={open}
             >
               <FiUploadCloud className="text-[#FFD60A] text-2xl" />
             </div>
             <p className="mt-2 max-w-[200px] text-center text-sm text-[#999DAA]">
               Drag and drop an {!video ? "image" : "video"}, or click to{" "}
-              <span 
+              <span
                 className="font-semibold text-[#FFD60A] cursor-pointer"
                 onClick={open}
               >
                 Browse
-              </span> a file
+              </span>{" "}
+              a file
             </p>
             <ul className="mt-10 flex list-disc justify-between space-x-12 text-center text-xs text-[#999DAA]">
               <li>Aspect ratio 16:9</li>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import SubSectionModal from "./SubSectionModal";
 import { AiFillCaretDown } from "react-icons/ai";
 import { FaPlus } from "react-icons/fa";
@@ -7,7 +7,7 @@ import { RiDeleteBin6Line } from "react-icons/ri";
 import { RxDropdownMenu } from "react-icons/rx";
 import { setCourse } from "../../../../../slice/courseSlice";
 import Confirmation from "../../../../common/Confirmation";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   deleteSection,
   deleteSubSection,
@@ -38,8 +38,8 @@ export default function NestedView({ handleChangeEditSectionName }) {
     setConfirmationModal(null);
   };
 
-  const handleDeleteSubSection = async (SubSectionId, sectionId) => {
-    const result = await deleteSubSection({ SubSectionId, sectionId }, token);
+  const handleDeleteSubSection = async (subSectionId, sectionId) => {
+    const result = await deleteSubSection({ subSectionId, sectionId }, token);
     if (result) {
       const updateCourseContent = course.courseContent.map((section) =>
         section._id === sectionId ? result : section
@@ -83,7 +83,7 @@ export default function NestedView({ handleChangeEditSectionName }) {
                       text2: "All the lectures in this section will be deleted",
                       btn1Text: "Delete",
                       btn2Text: "Cancel",
-                      btn1Handler: () => handleDeleleSection(section._id),
+                      btn1Handler: () => handleDeleteSection(section._id),
                       btn2Handler: () => setConfirmationModal(null),
                     })
                   }

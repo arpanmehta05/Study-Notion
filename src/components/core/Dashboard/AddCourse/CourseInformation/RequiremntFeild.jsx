@@ -21,8 +21,8 @@ export default function RequiremntFeild({
   }, []);
 
   useEffect(() => {
-    setValue(name, requirement);
-  }, [requirementList]);
+    setValue(name, requirementList);
+  }, [setValue, name, requirementList]);
 
   const handleAddRequirement = () => {
     if (requirement) {

@@ -12,7 +12,7 @@ import {
 import { editCourseDetails } from "../../../../../services/operations/CourseDetailsApi";
 
 export default function index() {
-  const { register, handleSubmit, setValue, getValue } = useForm();
+  const { register, handleSubmit,getValues, setValue } = useForm();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { token } = useSelector((state) => state.auth);
@@ -37,15 +37,15 @@ export default function index() {
   const handleCoursePublish = async () => {
     if (
       (course?.status === COURSE_STATUS.PUBLISHED &&
-        getValue("public") === true) ||
-      (course?.status === COURSE_STATUS.DRAFT && getValue("public") === false)
+        getValues("public") === true) ||
+      (course?.status === COURSE_STATUS.DRAFT && getValues("public") === false)
     ) {
       goToCourse();
       return;
     }
     const formData = new FormData();
     formData.append("courseId", course._id);
-    const courseStatus = getValue("public")
+    const courseStatus = getValues("public")
       ? COURSE_STATUS.PUBLISHED
       : COURSE_STATUS.DRAFT;
     formData.append("status", courseStatus);

@@ -32,6 +32,7 @@ export default function CourseInformation() {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
+    setValue("courseRequirements", []);
     const getCategories = async () => {
       setLoading(true);
       const categories = await fetchCourseCategories();
@@ -41,7 +42,6 @@ export default function CourseInformation() {
       setLoading(false);
     };
     if (editCourse) {
-      // Make sure the field names match what you register
       setValue("courseTitle", course.courseName);
       setValue("courseShortDescription", course.Description);
       setValue("coursePrice", course.price);
@@ -63,13 +63,14 @@ export default function CourseInformation() {
       currentValues.courseTags?.toString() !== course.tag?.toString() ||
       currentValues.courseBenefits !== course.whatYouWillLearn ||
       currentValues.category?._id !== course.category?._id ||
-      (currentValues.courseRequirements?.toString() !==
-        course.instructions?.toString() &&
-        currentValues.courseImage !== course.thumbnail)
+      currentValues.courseRequirements?.toString() !==
+        course.instructions?.toString() ||
+      currentValues.courseImage !== course.thumbnail
     ) {
       return true;
+    } else {
+      return false;
     }
-    return false;
   };
 
   const onSubmit = async (data) => {
@@ -94,7 +95,7 @@ export default function CourseInformation() {
           formData.append("whatYouWillLearn", data.courseBenefits);
         }
         if (currentValues.category?._id !== course.category?._id) {
-          formData.append("category", data.category._id);
+          formData.append("Category", data.category);
         }
         if (
           currentValues.courseRequirements?.toString() !==
@@ -119,31 +120,41 @@ export default function CourseInformation() {
         toast.error("No changes made");
       }
       return;
-    }
-
-    const formData = new FormData();
-    formData.append("courseName", data.courseTitle);
-    formData.append("courseDescription", data.courseShortDescription);
-    formData.append("price", data.coursePrice);
-    formData.append("tag", JSON.stringify(data.courseTags));
-    formData.append("whatYouWillLearn", data.courseBenefits);
-    formData.append("category", data.category._id);
-    formData.append("status", COURSE_STATUS.DRAFT);
-    formData.append("instructions", JSON.stringify(data.courseRequirements));
-    if (data.courseImage instanceof FileList) {
-      formData.append("thumbnail", data.courseImage[0]);
-    } else if (Array.isArray(data.courseImage)) {
-      formData.append("thumbnail", data.courseImage[0]);
     } else {
-      formData.append("thumbnail", data.courseImage);
+      try {
+        const formData = new FormData();
+        formData.append("courseName", data.courseTitle);
+        formData.append("courseDescription", data.courseShortDescription);
+        formData.append("price", data.coursePrice);
+        formData.append("tag", JSON.stringify(data.courseTags));
+        formData.append("whatYouWillLearn", data.courseBenefits);
+        formData.append("Category", data.category);
+        formData.append("status", COURSE_STATUS.DRAFT);
+        formData.append("instructions", JSON.stringify(data.courseRequirements));
+        if (data.courseImage instanceof File) {
+          formData.append("thumbnail", data.courseImage);
+        } else if (data.courseImage instanceof FileList) {
+          formData.append("thumbnail", data.courseImage[0]);
+        } else if (Array.isArray(data.courseImage) && data.courseImage[0]) {
+          formData.append("thumbnail", data.courseImage[0]);
+        } else {
+          toast.error("Invalid thumbnail format");
+          return;
+        }
+  
+        setLoading(true);
+        const result = await addCourseDetails(formData, token);
+        if (result) {
+          dispatch(setStep(2));
+          dispatch(setCourse(result));
+        }
+      } catch (error) {
+        console.error("Course creation error:", error);
+        toast.error("Failed to create course");
+      } finally {
+        setLoading(false);
+      }
     }
-    setLoading(true);
-    const result = await addCourseDetails(formData, token);
-    if (result) {
-      dispatch(setStep(2));
-      dispatch(setCourse(result));
-    }
-    setLoading(false);
   };
 
   return (
@@ -221,7 +232,7 @@ export default function CourseInformation() {
           </option>
           {!loading &&
             categories?.map((category, idx) => (
-              <option key={idx} value={category.id}>
+              <option key={idx} value={category._id}>
                 {category?.name}
               </option>
             ))}

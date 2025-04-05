@@ -30,7 +30,7 @@ export default function ChipInput({
   }, [chips]);
 
   const handKeyDown = (e) => {
-    if (e.key === "Enter" || event.key === ",") {
+    if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
       const value = e.target.value.trim();
       if (value && !chips.includes(value)) {

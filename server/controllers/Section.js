@@ -21,30 +21,45 @@ exports.createSection = async (req, res) => {
         path: "subSection",
       },
     });
-    return res
-      .status(201)
-      .json({ message: "Section created successfully", updatedCourse });
+    return res.status(201).json({
+      success: true,
+      message: "Section created successfully",
+      updatedCourse,
+    });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ success: false, error: err.message });
   }
 };
 
 exports.updateSection = async (req, res) => {
   try {
-    const { sectionName, sectionId } = req.body;
-    if (!sectionName || !sectionId) {
-      return res.status(400).json({ error: "All fields are required" });
+    const { sectionName, sectionId, courseId } = req.body;
+    if (!sectionName || !sectionId || !courseId) {
+      return res
+        .status(400)
+        .json({ success: false, error: "All fields are required" });
     }
-    const updatedSection = await SectionModel.findByIdAndUpdate(
+    await SectionModel.findByIdAndUpdate(
       sectionId,
       { sectionName },
       { new: true }
     );
-    return res
-      .status(200)
-      .json({ message: "Section updated successfully", updatedSection });
+    const updatedCourse = await CourseModel.findById(courseId)
+      .populate({
+        path: "courseContent",
+        populate: {
+          path: "subSection",
+        },
+      })
+      .exec();
+    
+    return res.status(200).json({
+      success: true,
+      message: "Section updated successfully",
+      updatedCourse,
+    });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ success: false, error: err.message });
   }
 };
 
@@ -70,13 +85,11 @@ exports.deleteSection = async (req, res) => {
         },
       })
       .exec();
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "Section deleted successfully",
-        data: course,
-      });
+    return res.status(200).json({
+      success: true,
+      message: "Section deleted successfully",
+      data: course,
+    });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }

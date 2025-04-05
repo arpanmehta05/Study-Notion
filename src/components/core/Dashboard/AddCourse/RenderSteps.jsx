@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { FaCheck } from "react-icons/fa";
 import CourseInformation from "./CourseInformation/CourseInformation";
 import CourseBuilderForm from "./CourseBuilder/CourseBuilderForm";
-import PublishCourse from "./PublishCourse/index"
+import PublishCourse from "./PublishCourse/index";
 
 export default function RenderSteps() {
   const { step } = useSelector((state) => state.course);
@@ -58,20 +58,22 @@ export default function RenderSteps() {
 
       <div className="relative mb-16 flex w-full select-none justify-between">
         {steps.map((item) => {
-          <>
-            <div
-              className="flex min-w-[130px] flex-col items-center gap-y-2"
-              key={item.id}
-            >
-              <p
-                className={`text-sm ${
-                  step >= item.id ? "text-[#f1f2ff]" : "text-[#585D69]"
-                }`}
+          return (
+            <>
+              <div
+                className="flex min-w-[130px] flex-col items-center gap-y-2"
+                key={item.id}
               >
-                {item.title}
-              </p>
-            </div>
-          </>;
+                <p
+                  className={`text-sm ${
+                    step >= item.id ? "text-[#f1f2ff]" : "text-[#585D69]"
+                  }`}
+                >
+                  {item.title}
+                </p>
+              </div>
+            </>
+          );
         })}
       </div>
       {step === 1 && <CourseInformation />}
