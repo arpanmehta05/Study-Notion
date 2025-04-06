@@ -1,5 +1,5 @@
 import toast from "react-hot-toast";
-import { apiConnector} from "../ApiConnector"
+import { apiConnector } from "../ApiConnector";
 import { courseEndpoints } from "../apis";
 
 export const fetchInstructorCourses = async (token) => {
@@ -85,7 +85,7 @@ export const updateSection = async (data, token) => {
         Authorization: `Bearer ${token}`,
       }
     );
-    
+
     if (!response?.data?.success) {
       throw new Error("Failed to update section");
     }
@@ -270,3 +270,44 @@ export const addCourseDetails = async (data, token) => {
   toast.dismiss(toastId);
   return result;
 };
+
+export const getFullDetailsofCourse = async (courseId, token) => {
+  const toastId = toast.loading("Fetching course details...");
+  let result = null;
+  try {
+    const response = await apiConnector(
+      "POST",
+      courseEndpoints.GET_FULL_COURSE_DETAILS_API,
+      { courseId },
+      { Authorization: `Bearer ${token}` }
+    );
+    if (!response.data.success) {
+      throw new Error(response.data.message);
+    }
+    result = response?.data?.data;
+  } catch (err) {
+    console.log("FETCH COURSE DETAILS ERROR", err);
+    result = err.response.data;
+  }
+  toast.dismiss(toastId);
+  return result;
+};
+
+export const fetchCourseDetail = async(CourseId) => {
+  const toastId = toast.loading("Fetching course details...");
+  let result = null;
+  try {
+    const response = await apiConnector("POST",courseEndpoints.GET_COURSE_DETAILS_API,{CourseId})
+    if(!response.data.success)
+    {
+      throw new Error(response.data.message)
+    }
+    result = response.data
+  }
+  catch (err) {
+    console.log("FETCH COURSE DETAILS ERROR", err);
+    result = err.response.data
+  }
+  toast.dismiss(toastId);
+  return result
+}

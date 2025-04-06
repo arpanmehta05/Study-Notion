@@ -92,7 +92,7 @@ exports.getCourses = async (req, res) => {
 exports.getFullCourseDetails = async (req, res) => {
   try {
     const { courseId } = req.body;
-    const courseDetails = await CourseModel.find({ _id: courseId })
+    const courseDetails = await CourseModel.findById(courseId)
       .populate({
         path: "instructor",
         populate: {
@@ -109,12 +109,12 @@ exports.getFullCourseDetails = async (req, res) => {
       })
       .exec();
     if (!courseDetails) {
-      return res.status(404).json({ message: "Course not found" });
+      return res.status(404).json({ success: false, message: "Course not found" });
     }
-    return res.status(200).json({ Success: true, data: courseDetails });
+    return res.status(200).json({ success: true, data: courseDetails });
   } catch (err) {
     console.log(err);
-    return res.status(500).json({ message: err.message });
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -132,7 +132,7 @@ exports.getCourseDetails = async (req, res) => {
       .exec();
     if (!courseDetails) {
       return res.status(400).json({
-        Success: false,
+        success: false,
         message: `Could not find course with id: ${courseID}`,
       });
     }

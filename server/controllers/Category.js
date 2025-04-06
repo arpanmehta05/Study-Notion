@@ -37,19 +37,41 @@ exports.categoryPageDetails = async (req, res) => {
     const { categoryId } = req.body;
 
     const selectedCategory = await CategoryModel.findById(categoryId)
-      .populate("course")
+      .populate({
+        path: "course",
+        match: { status: "Published" },
+        populate: "ratingAndReviews",
+      })
       .exec();
     if (!selectedCategory) {
-      return res.status(400).json({ message: "Category not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Category not found" });
     }
-    const diffrentCategory = await CategoryModel.find({
+
+    if (selectedCategory.course.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No courses found for the selected category.",
+      });
+    }
+
+    const categoriesExceptSelected = await CategoryModel.find({
       _id: { $ne: categoryId },
-    })
-      .populate("course")
+    });
+    let differentCategores = await CategoryModel.findOne(
+      categoriesExceptSelected[getRandomInt(categoriesExceptSelected.length)]
+        ._id
+    )
+      .populate({
+        path: "course",
+        match: { status: "Published" },
+      })
       .exec();
+
     const allCategories = await CategoryModel.find()
       .populate({
-        path: "courses",
+        path: "course",
         match: { status: "Published" },
         populate: {
           path: "instructor",
@@ -60,11 +82,17 @@ exports.categoryPageDetails = async (req, res) => {
     const mostSellingCourses = allCourses
       .sort((a, b) => b.sold - a.sold)
       .slice(0, 10);
-    return res.status(200).json({
+
+    res.status(200).json({
       success: true,
-      data: { selectedCategory, diffrentCategory, mostSellingCourses },
+      message: "Category page details fetched successfully",
+      data: { selectedCategory, differentCategores, mostSellingCourses },
     });
   } catch (err) {
-    return res.status(500).json({ message: err.message });
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      err: err.message,
+    });
   }
 };

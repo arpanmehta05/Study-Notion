@@ -47,7 +47,7 @@ export default function ChipInput({
         {label} <sup className="text-[#EF476F]">*</sup>
       </label>
       <div className="flex w-full flex-wrap gap-y-2">
-        {chips.map((chip, index) => (
+        {(chips || []).map((chip, index) => (
           <div
             key={index}
             className="m-1 flex items-center rounded-full bg-[#9E8006] px-2 py-1 text-sm text-[#f1f2ff]"

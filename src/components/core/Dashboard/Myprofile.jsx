@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import IconBtn from "../../common/IconBtn";
 import { RiEditBoxLine } from "react-icons/ri";
+import { formattedDate } from "../../../utils/dateFormatter";
 
 export default function Myprofile() {
   const { user } = useSelector((state) => state.profile);
@@ -104,7 +105,8 @@ export default function Myprofile() {
             <div>
               <p className="mb-2 text-sm text-[#424854]">Date of Birth</p>
               <p className="text-sm font-medium text-[#f1f2ff]">
-                {user?.additionalDetail?.dateOfBirth ?? "Add Date of Birth"}
+                {formattedDate(user?.additionalDetail?.dateOfBirth) ??
+                  "Add Date of Birth"}
               </p>
             </div>
           </div>
