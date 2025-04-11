@@ -152,26 +152,45 @@ export const updatesubSection = async (data, token) => {
 
 export const createSubSection = async (data, token) => {
   let result = null;
-  const toastID = toast.loading("Creating subsection...");
+  const toastID = toast.loading("Preparing to upload video...");
+  
   try {
+    const videoFile = data.get('video');
+    if (videoFile && videoFile.size > 100 * 1024 * 1024) {
+      toast.error("Video file is too large (max 100MB)");
+      return null;
+    }
+    toast.loading("Uploading video - this may take a while...", { id: toastID });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+    
     const response = await apiConnector(
       "POST",
       courseEndpoints.CREATE_SUBSECTION_API,
       data,
       {
         Authorization: `Bearer ${token}`,
-      }
+      },
+      controller.signal
     );
+    
+    clearTimeout(timeoutId);
+    
     if (!response?.data?.success) {
-      throw new Error("Failed to create subsection");
+      throw new Error(response?.data?.message || "Failed to create subsection");
     }
-    toast.success("Subsection created successfully");
+    
+    toast.success("Subsection created successfully", { id: toastID });
     result = response?.data?.section;
   } catch (err) {
     console.log("CREATE SUBSECTION ERROR", err);
-    toast.error("Failed to create subsection");
+    if (err.name === "AbortError") {
+      toast.error("Upload timed out. Try a smaller video file", { id: toastID });
+    } else {
+      toast.error(err.message || "Failed to create subsection", { id: toastID });
+    }
   }
-  toast.dismiss(toastID);
+  
   return result;
 };
 
@@ -248,7 +267,10 @@ export const fetchCourseCategories = async () => {
 export const addCourseDetails = async (data, token) => {
   let result = null;
   const toastId = toast.loading("Adding course details...");
+  
   try {
+    console.log("Form data being sent:", Object.fromEntries(data.entries()));
+    
     const response = await apiConnector(
       "POST",
       courseEndpoints.CREATE_COURSE_API,
@@ -258,15 +280,18 @@ export const addCourseDetails = async (data, token) => {
         Authorization: `Bearer ${token}`,
       }
     );
+    
     if (!response?.data?.Success) {
       throw new Error("Failed to add course details");
     }
+    
     toast.success("Course details added successfully");
     result = response?.data?.data;
   } catch (err) {
     console.log("ADD COURSE DETAILS ERROR", err);
     toast.error("Failed to add course details");
   }
+  
   toast.dismiss(toastId);
   return result;
 };

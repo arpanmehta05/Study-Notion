@@ -13,17 +13,43 @@ export default function ChipInput({
 }) {
   const [chips, setChips] = useState([]);
   const { editCourse, course } = useSelector((state) => state.course);
-  const handleDeleteChip = (chipndex) => {
-    const newChips = chips.filter((_, index) => index !== chipndex);
+  
+  const handleDeleteChip = (chipIndex) => {
+    const newChips = chips.filter((_, index) => index !== chipIndex);
     setChips(newChips);
   };
 
   useEffect(() => {
-    if (editCourse) {
-      setChips(course?.tag);
+    if (editCourse && course?.tag) {
+      // Parse the tags properly
+      let parsedTags = [];
+      
+      if (typeof course.tag === 'string') {
+        // Handle JSON string format like "["java"]"
+        try {
+          parsedTags = JSON.parse(course.tag);
+        } catch (e) {
+          // If parsing fails, handle as plain string
+          parsedTags = [course.tag];
+        }
+      } else if (Array.isArray(course.tag)) {
+        // Already an array
+        parsedTags = course.tag;
+      } else if (course.tag) {
+        // Any other non-empty value
+        parsedTags = [course.tag];
+      }
+      
+      // Clean up any string artifacts
+      parsedTags = parsedTags.map(tag => 
+        typeof tag === 'string' ? tag.replace(/^\[|\]$|"|'/g, '') : tag
+      );
+      
+      setChips(parsedTags);
     }
+    
     register(name, { required: true, validate: (value) => value.length > 0 });
-  }, []);
+  }, [editCourse, course]);
 
   useEffect(() => {
     setValue(name, chips);

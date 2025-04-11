@@ -12,29 +12,53 @@ export default function RequiremntFeild({
   const { editCourse, course } = useSelector((state) => state.course);
   const [requirement, setRequirement] = useState("");
   const [requirementList, setRequirementList] = useState([]);
-
   useEffect(() => {
-    if (editCourse) {
-      setRequirementList(course?.instructions);
-    }
     register(name, { required: true, validate: (value) => value.length > 0 });
-  }, []);
-
+  }, [register, name]);
   useEffect(() => {
-    setValue(name, requirementList);
-  }, [setValue, name, requirementList]);
+    if (editCourse && course) {
+      if (course.instructions && course.instructions.length > 0) {
+        let processedInstructions = [];
 
+        if (typeof course.instructions === "string") {
+          try {
+            processedInstructions = JSON.parse(course.instructions);
+          } catch (e) {
+            if (course.instructions.includes(",")) {
+              processedInstructions = course.instructions
+                .split(",")
+                .map((i) => i.trim());
+            } else {
+              processedInstructions = [course.instructions];
+            }
+          }
+        } else if (Array.isArray(course.instructions)) {
+          processedInstructions = course.instructions;
+        }
+        processedInstructions = processedInstructions.filter(
+          (item) => item && typeof item === "string" && item.trim() !== ""
+        );
+        setRequirementList(processedInstructions);
+        setValue(name, processedInstructions);
+      } else {
+        console.log("No instructions found in course data");
+        setRequirementList([]);
+        setValue(name, []);
+      }
+    }
+  }, [editCourse, course, setValue, name]);
   const handleAddRequirement = () => {
     if (requirement) {
-      setRequirementList([...requirementList, requirement]);
+      const newList = [...requirementList, requirement];
+      setRequirementList(newList);
+      setValue(name, newList);
       setRequirement("");
     }
   };
-
   const handleRemoveRequirement = (index) => {
-    const updatedList = [...requirementList];
-    updatedList.splice(index, 1);
-    setRequirementList(updatedList);
+    const newList = requirementList.filter((_, i) => i !== index);
+    setRequirementList(newList);
+    setValue(name, newList);
   };
 
   return (
@@ -45,34 +69,39 @@ export default function RequiremntFeild({
       <div className="flex flex-col items-start space-y-2">
         <input
           type="text"
-          id={name}
           value={requirement}
           onChange={(e) => setRequirement(e.target.value)}
           className="form-style w-full"
+          placeholder="Enter a requirement"
         />
         <button
           type="button"
           onClick={handleAddRequirement}
-          className="font-semibold text-[#FFD60A] cursor-pointer"
+          className="font-semibold text-[#FFE83D]"
         >
           Add
         </button>
       </div>
       {requirementList.length > 0 && (
         <ul className="mt-2 list-inside list-disc">
-          {requirementList.map((requirement, idx) => (
-            <li key={idx} className="flex items-center text-[#f1f2ff]">
-              <span>{requirement}</span>
+          {requirementList.map((item, index) => (
+            <li key={index} className="flex items-center text-[#C5C7D4]">
+              <span>{item}</span>
               <button
                 type="button"
-                onClick={() => handleRemoveRequirement(idx)}
-                className="ml-2 text-xs text-[#888888] cursor-pointer"
+                onClick={() => handleRemoveRequirement(index)}
+                className="ml-2 text-xs text-[#EF476F]"
               >
-                Clear
+                Remove
               </button>
             </li>
           ))}
         </ul>
+      )}
+      {errors[name] && (
+        <span className="ml-2 text-xs tracking-wide text-[#EF476F]">
+          At least one requirement is required
+        </span>
       )}
     </div>
   );

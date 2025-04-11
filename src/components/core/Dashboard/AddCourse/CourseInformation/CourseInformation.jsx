@@ -41,36 +41,97 @@ export default function CourseInformation() {
       }
       setLoading(false);
     };
-    if (editCourse) {
-      setValue("courseTitle", course.courseName);
-      setValue("courseShortDescription", course.Description);
-      setValue("coursePrice", course.price);
-      setValue("courseTags", course.tag);
-      setValue("courseBenefits", course.whatYouWillLearn);
-      setValue("category", course.category);
-      setValue("courseRequirements", course.instructions);
-      setValue("courseImage", course.thumbnail);
+
+    if (editCourse && course) {
+      setValue("courseTitle", course.courseName || "");
+      setValue("courseShortDescription", course.courseDescription || "");
+      setValue("coursePrice", course.price || 0);
+      if (course.tag) {
+        let parsedTags;
+        if (typeof course.tag === "string") {
+          try {
+            parsedTags = JSON.parse(course.tag);
+          } catch (e) {
+            parsedTags = course.tag;
+          }
+        } else {
+          parsedTags = course.tag;
+        }
+        setValue("courseTags", parsedTags);
+      }
+      setValue("courseBenefits", course.whatYouWillLearn || "");
+      if (course.Category) {
+        setValue("category", course.Category);
+      }
+      if (course.instructions) {
+        let instructions = course.instructions;
+        if (typeof instructions === "string") {
+          try {
+            instructions = JSON.parse(instructions);
+          } catch (e) {
+            instructions = [instructions];
+          }
+        }
+        setValue("courseRequirements", instructions);
+      }
+      setValue("courseImage", course.thumbnail || "");
     }
+
     getCategories();
-  }, []);
+  }, [editCourse, course]);
+
+  useEffect(() => {
+    if (editCourse) {
+      setValue("courseTitle", course?.courseName || "");
+      setValue("courseShortDescription", course?.courseDescription || "");
+      setValue("coursePrice", course?.price || 0);
+      setValue("courseBenefits", course?.whatYouWillLearn || "");
+      setValue("courseImage", course?.thumbnail || "");
+      if (course?.Category) {
+        setValue("courseCategory", course.Category);
+      }
+    }
+  }, [editCourse, course, setValue]);
+
+  useEffect(() => {
+    if (categories.length > 0 && editCourse && course?.Category) {
+      let categoryId;
+      if (typeof course.Category === "object" && course.Category._id) {
+        categoryId = course.Category._id;
+      } else {
+        categoryId = course.Category;
+      }
+      setValue("category", categoryId);
+      setTimeout(() => {
+        const categorySelect = document.querySelector(
+          'select[name="category"]'
+        );
+        if (categorySelect) {
+          categorySelect.value = categoryId;
+        }
+      }, 100);
+    }
+  }, [categories, editCourse, course]);
 
   const isFormUpdated = () => {
     const currentValues = getValues();
     if (
-      currentValues.courseTitle !== course.courseName ||
-      currentValues.courseShortDescription !== course.Description ||
-      currentValues.coursePrice !== course.price ||
-      currentValues.courseTags?.toString() !== course.tag?.toString() ||
-      currentValues.courseBenefits !== course.whatYouWillLearn ||
-      currentValues.category?._id !== course.category?._id ||
-      currentValues.courseRequirements?.toString() !==
-        course.instructions?.toString() ||
-      currentValues.courseImage !== course.thumbnail
+      currentValues.courseTitle !== (course?.courseName || "") ||
+      currentValues.courseShortDescription !==
+        (course?.courseDescription || "") ||
+      currentValues.coursePrice !== (course?.price || 0) ||
+      JSON.stringify(currentValues.courseTags) !==
+        JSON.stringify(course?.tag || []) ||
+      currentValues.courseBenefits !== (course?.whatYouWillLearn || "") ||
+      currentValues.category !== (course?.Category || "") ||
+      JSON.stringify(currentValues.courseRequirements) !==
+        JSON.stringify(course?.instructions || []) ||
+      currentValues.courseImage !== (course?.thumbnail || "")
     ) {
       return true;
-    } else {
-      return false;
     }
+
+    return false;
   };
 
   const onSubmit = async (data) => {
@@ -130,7 +191,10 @@ export default function CourseInformation() {
         formData.append("whatYouWillLearn", data.courseBenefits);
         formData.append("Category", data.category);
         formData.append("status", COURSE_STATUS.DRAFT);
-        formData.append("instructions", JSON.stringify(data.courseRequirements));
+        formData.append(
+          "instructions",
+          JSON.stringify(data.courseRequirements)
+        );
         if (data.courseImage instanceof File) {
           formData.append("thumbnail", data.courseImage);
         } else if (data.courseImage instanceof FileList) {
@@ -141,7 +205,7 @@ export default function CourseInformation() {
           toast.error("Invalid thumbnail format");
           return;
         }
-  
+
         setLoading(true);
         const result = await addCourseDetails(formData, token);
         if (result) {
@@ -218,28 +282,26 @@ export default function CourseInformation() {
         )}
       </div>
       <div className="flex flex-col space-y-2">
-        <label className="text-sm text-[#f1f2ff]">
-          Course Category <sup className="text-[#EF476F]">*</sup>
+        <label className="text-sm text-[#f1f2ff]" htmlFor="courseCategory">
+          Category <sup className="text-[#EF476F]">*</sup>
         </label>
         <select
           {...register("category", { required: true })}
+          defaultValue=""
           className="form-style w-full"
-          id="category"
-          defaultValue={""}
         >
-          <option disabled value="">
-            Choose a category
+          <option value="" disabled>
+            Choose a Category
           </option>
-          {!loading &&
-            categories?.map((category, idx) => (
-              <option key={idx} value={category._id}>
-                {category?.name}
-              </option>
-            ))}
+          {categories.map((category) => (
+            <option key={category._id} value={category._id}>
+              {category.name}
+            </option>
+          ))}
         </select>
         {errors.category && (
           <span className="ml-2 text-xs tracking-wide text-[#EF476F]">
-            Course Category is required
+            Category is required
           </span>
         )}
       </div>

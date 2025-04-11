@@ -15,6 +15,7 @@ exports.createCourse = async (req, res) => {
       whatYouWillLearn,
       price,
       Category,
+      courseRequirements,
     } = req.body;
     const thumbnail = req.files.thumbnail;
     if (
@@ -41,6 +42,28 @@ exports.createCourse = async (req, res) => {
       thumbnail,
       process.env.FOLDER_NAME
     );
+    let instructions = [];
+    if (courseRequirements) {
+      try {
+        instructions =
+          typeof courseRequirements === "string"
+            ? JSON.parse(courseRequirements)
+            : courseRequirements;
+      } catch (e) {
+        console.log("Error parsing course requirements:", e);
+        instructions = courseRequirements ? [courseRequirements] : [];
+      }
+    }
+    let parsedTags = [];
+    if (tag) {
+      try {
+        parsedTags = typeof tag === "string" ? JSON.parse(tag) : tag;
+      } catch (e) {
+        console.log("Error parsing tags:", e);
+        parsedTags = tag ? [tag] : [];
+      }
+    }
+
     const newCourse = await CourseModel.create({
       courseName,
       courseDescription,
@@ -49,10 +72,21 @@ exports.createCourse = async (req, res) => {
       price,
       Category: CategoryDetails._id,
       thumbnail: thumbnailImage.secure_url,
-      tag,
+      tag: parsedTags,
+      instructions,
+      status: "Published",
     });
+
     await UserModel.findByIdAndUpdate(
       { _id: instructorDetails._id },
+      {
+        $push: { course: newCourse._id },
+      },
+      { new: true }
+    );
+
+    await CategoryModel.findByIdAndUpdate(
+      { _id: CategoryDetails._id },
       {
         $push: { course: newCourse._id },
       },
@@ -65,24 +99,14 @@ exports.createCourse = async (req, res) => {
       data: newCourse,
     });
   } catch (err) {
+    console.error("Error creating course:", err);
     return res.status(500).json({ message: err.message });
   }
 };
 
 exports.getCourses = async (req, res) => {
   try {
-    const courses = await CourseModel.find(
-      {}
-      //   {
-      //     courseName: true,
-      //     price: true,
-      //     thumbnail: true,
-      //     instructor: true,
-      //     ratingAndReviews: true,
-      //     studentsEnrolled: true,
-      //   }
-    );
-    // ).populate("instructor").exec();
+    const courses = await CourseModel.find({});
     return res.status(200).json({ Success: true, data: courses });
   } catch (err) {
     return res.status(500).json({ message: err.message });
@@ -109,7 +133,9 @@ exports.getFullCourseDetails = async (req, res) => {
       })
       .exec();
     if (!courseDetails) {
-      return res.status(404).json({ success: false, message: "Course not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Course not found" });
     }
     return res.status(200).json({ success: true, data: courseDetails });
   } catch (err) {
@@ -206,6 +232,11 @@ exports.deleteCourse = async (req, res) => {
       }
       await SectionModel.findByIdAndDelete(sectionId);
     }
+    await CategoryModel.findByIdAndUpdate(
+      { _id: course.Category },
+      { $pull: { course: courseId } },
+      { new: true }
+    );
     await CourseModel.findByIdAndDelete(courseId);
     return res.status(200).json({
       success: true,
@@ -222,31 +253,49 @@ exports.deleteCourse = async (req, res) => {
 exports.editCourse = async (req, res) => {
   try {
     const { courseId } = req.body;
-    const update = req.body;
+    const updates = req.body;
     const course = await CourseModel.findById(courseId);
+
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
-    if (req.files) {
-      console.log("thumbnail update");
+    if (req.files && req.files.thumbnailImage) {
+      console.log("Updating thumbnail");
       const thumbnail = req.files.thumbnailImage;
       const thumbnailImage = await uploadImageToloudinary(
         thumbnail,
         process.env.FOLDER_NAME
       );
       course.thumbnail = thumbnailImage.secure_url;
-      for (const key in update) {
-        if (update.hasOwnProperty(key)) {
-          if (key === "tag" || key === "instructions") {
-            course[key] = JSON.parse(update[key]);
-          } else {
-            course[key] = update[key];
+    }
+    for (const key in updates) {
+      if (updates.hasOwnProperty(key) && key !== "courseId") {
+        if (
+          key === "tag" ||
+          key === "instructions" ||
+          key === "courseRequirements"
+        ) {
+          try {
+            if (key === "courseRequirements") {
+              course.instructions = JSON.parse(updates[key]);
+            } else if (key === "instructions") {
+              course.instructions = JSON.parse(updates[key]);
+            } else {
+              course[key] = JSON.parse(updates[key]);
+            }
+          } catch (e) {
+            console.log(`Error parsing ${key}:`, e);
+            course[key] = updates[key];
           }
+        } else if (key !== "thumbnailImage") {
+          course[key] = updates[key];
         }
       }
     }
+
     await course.save();
-    const updateCourse = await CourseModel.findOne({ _id: courseId })
+
+    const updatedCourse = await CourseModel.findOne({ _id: courseId })
       .populate({
         path: "instructor",
         populate: {
@@ -262,7 +311,8 @@ exports.editCourse = async (req, res) => {
         },
       })
       .exec();
-    res.json({ success: true, data: updateCourse });
+
+    res.json({ success: true, data: updatedCourse });
   } catch (err) {
     console.log(err);
     return res
